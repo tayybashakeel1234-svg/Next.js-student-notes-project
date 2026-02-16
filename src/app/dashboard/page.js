@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { useRouter } from "next/navigation";
 
+
+
 export default function DashboardHome() {
   const [notes, setNotes] = useState([]);
   const [pdfNotes, setPdfNotes] = useState([]);

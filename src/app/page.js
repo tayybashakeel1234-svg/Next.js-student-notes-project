@@ -99,6 +99,7 @@ const Counter = ({ target, suffix = "" }) => {
 
 
   return (
+    
     <div className={`min-h-screen transition-colors duration-500 ${dark ? "bg-[#0b0b0b]" : "bg-white"}`}>
 
       {/* ================= HERO SECTION ================= */}

@@ -4,6 +4,7 @@ import { ThemeContext } from "../../context/ThemeContext";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
+import { FiEye, FiEyeOff } from "react-icons/fi"; // 🔹 For eye icon
 
 export default function Signup() {
   const { dark } = useContext(ThemeContext);
@@ -19,6 +20,10 @@ export default function Signup() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
+
+  // 🔹 Password visibility state
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -36,7 +41,6 @@ export default function Signup() {
 
     setLoading(true);
 
-    // 🔹 Signup with Supabase
     const { data, error } = await supabase.auth.signUp({
       email: formData.email,
       password: formData.password,
@@ -48,36 +52,33 @@ export default function Signup() {
       return;
     }
 
-     // If email confirmation is required, user may be null
-  if (!data.user) {
-    setErrorMsg("Signup failed. Please try again.");
+    if (!data.user) {
+      setErrorMsg("Signup failed. Please try again.");
+      setLoading(false);
+      return;
+    }
+
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .insert({
+        id: data.user.id,
+        name: formData.name,
+        email: formData.email,
+      });
+
+    if (profileError) {
+      setErrorMsg(profileError.message);
+      setLoading(false);
+      return;
+    }
+
+    setSuccessMsg("Signup successful! Please login.");
     setLoading(false);
-    return;
-  }
 
-  // Step 2: Insert Profile
-  const { error: profileError } = await supabase
-    .from("profiles")
-    .insert({
-      id: data.user.id,
-      name: formData.name,
-      email: formData.email,
-    });
-
-  if (profileError) {
-    setErrorMsg(profileError.message);
-    setLoading(false);
-    return;
-  }
-
-  setSuccessMsg("Signup successful! Please login.");
-  setLoading(false);
-
-  setTimeout(() => {
-    router.push("/login");
-  }, 1500);
-};
-
+    setTimeout(() => {
+      router.push("/login");
+    }, 1500);
+  };
 
   return (
     <div className={`min-h-screen flex items-center justify-center transition-colors duration-500 ${dark ? "bg-[#0b0b0b]" : "bg-white"}`}>
@@ -115,33 +116,51 @@ export default function Signup() {
             required
           />
 
-          <input
-            type="password"
-            name="password"
-            placeholder="Password"
-            value={formData.password}
-            onChange={handleChange}
-            className={`px-4 py-3 rounded-md border ${
-              dark
-                ? "bg-gray-800 border-gray-700 text-white placeholder-gray-400"
-                : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
-            }`}
-            required
-          />
+          {/* 🔹 Password Field with Eye Icon */}
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              name="password"
+              placeholder="Password"
+              value={formData.password}
+              onChange={handleChange}
+              className={`w-full px-4 py-3 rounded-md border ${
+                dark
+                  ? "bg-gray-800 border-gray-700 text-white placeholder-gray-400"
+                  : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
+              }`}
+              required
+            />
+            <span
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
+            </span>
+          </div>
 
-          <input
-            type="password"
-            name="confirmPassword"
-            placeholder="Confirm Password"
-            value={formData.confirmPassword}
-            onChange={handleChange}
-            className={`px-4 py-3 rounded-md border ${
-              dark
-                ? "bg-gray-800 border-gray-700 text-white placeholder-gray-400"
-                : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
-            }`}
-            required
-          />
+          {/* 🔹 Confirm Password Field with Eye Icon */}
+          <div className="relative">
+            <input
+              type={showConfirmPassword ? "text" : "password"}
+              name="confirmPassword"
+              placeholder="Confirm Password"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              className={`w-full px-4 py-3 rounded-md border ${
+                dark
+                  ? "bg-gray-800 border-gray-700 text-white placeholder-gray-400"
+                  : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
+              }`}
+              required
+            />
+            <span
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+            >
+              {showConfirmPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
+            </span>
+          </div>
 
           <button
             type="submit"
@@ -155,14 +174,12 @@ export default function Signup() {
             {loading ? "Signing up..." : "Sign Up"}
           </button>
 
-          {/* 🔴 Error Message */}
           {errorMsg && (
             <p className="text-red-500 text-sm text-center mt-2">
               {errorMsg}
             </p>
           )}
 
-          {/* 🟢 Success Message */}
           {successMsg && (
             <p className="text-green-500 text-sm text-center mt-2">
               {successMsg}
@@ -180,4 +197,3 @@ export default function Signup() {
     </div>
   );
 }
-
